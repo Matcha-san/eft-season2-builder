@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EFT Season 2: UNTAR CONTROL - モディファイア・ビルドシミュレーター</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #131618;
+      color: #d8d8d8;
+      background-image: radial-gradient(circle at 50% 0%, #1e272e 0%, #111315 70%);
+    }
+    .font-oswald {
+      font-family: 'Oswald', 'Noto Sans JP', sans-serif;
+    }
+    .card-bg {
+      background-color: rgba(30, 33, 36, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.15s ease;
+    }
+    .card-selectable {
+      cursor: pointer;
+    }
+    .card-selectable:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      background-color: rgba(42, 46, 51, 0.95);
+    }
+    /* ポジティブ選択時のハイライト */
+    .card-selected-pos {
+      background-color: rgba(32, 68, 42, 0.65) !important;
+      border-color: #68d391 !important;
+      box-shadow: 0 0 12px rgba(104, 211, 145, 0.25);
+    }
+    /* ネガティブ選択時のハイライト */
+    .card-selected-neg {
+      background-color: rgba(82, 32, 32, 0.65) !important;
+      border-color: #fc8181 !important;
+      box-shadow: 0 0 12px rgba(252, 129, 129, 0.25);
+    }
+    /* 競合（排他）特性のロック状態 */
+    .card-conflict {
+      opacity: 0.45;
+    }
+    .icon-box-global {
+      background-color: #25292d;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .icon-box-pos {
+      background-color: #222b24;
+      border-right: 1px solid rgba(110, 180, 120, 0.15);
+    }
+    .icon-box-neg {
+      background-color: #2e2121;
+      border-right: 1px solid rgba(200, 90, 90, 0.15);
+    }
+    .section-bar-global {
+      background: linear-gradient(90deg, rgba(160,165,170,0.05) 0%, rgba(160,165,170,0.18) 50%, rgba(160,165,170,0.05) 100%);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .section-bar-pos {
+      background: linear-gradient(90deg, rgba(90,150,100,0.05) 0%, rgba(90,150,100,0.2) 50%, rgba(90,150,100,0.05) 100%);
+      border-top: 1px solid rgba(120,200,130,0.15);
+      border-bottom: 1px solid rgba(120,200,130,0.15);
+    }
+    .section-bar-neg {
+      background: linear-gradient(90deg, rgba(180,75,75,0.05) 0%, rgba(180,75,75,0.22) 50%, rgba(180,75,75,0.05) 100%);
+      border-top: 1px solid rgba(220,95,95,0.15);
+      border-bottom: 1px solid rgba(220,95,95,0.15);
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-28 pt-6 px-3 sm:px-6 lg:px-8 select-none">
+
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- 右上言語切り替えボタン -->
+    <div class="flex justify-end mb-2">
+      <button id="btn-lang-toggle" type="button" class="px-3 py-1.5 rounded bg-[#1d2227] hover:bg-[#2a3138] text-gray-200 border border-gray-600 text-xs font-bold tracking-wider flex items-center gap-1.5 shadow transition">
+        <span>🌐</span>
+        <span id="lang-label">JP / EN (日本語)</span>
+      </button>
+    </div>
+
+    <!-- ヘッダー部分（UNTAR ロゴ風） -->
+    <header class="flex flex-col items-center justify-center mb-6 text-center">
+      <div class="flex items-center gap-4">
+        <!-- 国連風エンブレムSVG -->
+        <div class="w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 border-[#4ea8de] bg-[#16222c] flex items-center justify-center shadow-[0_0_20px_rgba(78,168,222,0.3)] relative shrink-0">
+          <svg class="w-9 h-9 sm:w-14 sm:h-14 text-[#4ea8de]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9" />
+            <ellipse cx="12" cy="12" rx="4" ry="9" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <path d="M4.5 7.5h15M4.5 16.5h15" />
+            <path d="M5 19c-2-2-3-4.5-3-7s1-5 3-7M19 19c2-2 3-4.5 3-7s-1-5-3-7" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="text-left">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span id="hdr-season" class="inline-block bg-[#2b6cb0] text-white text-xs font-bold px-2.5 py-0.5 rounded-sm tracking-widest uppercase">
+              SEASON 2 / シーズン2
+            </span>
+            <span id="hdr-badge" class="inline-block bg-gray-800 border border-gray-600 text-gray-300 text-[11px] px-2 py-0.5 rounded-sm">
+              非公式ビルドシミュレーター
+            </span>
+          </div>
+          <h1 class="font-oswald text-3xl sm:text-5xl font-bold tracking-wider text-white leading-none">
+            UNTAR
+          </h1>
+          <div class="font-oswald text-xl sm:text-3xl font-semibold tracking-widest text-[#4ea8de] leading-tight">
+            CONTROL <span id="hdr-sub" class="text-sm sm:text-lg font-sans font-bold text-gray-300 align-middle ml-1">- UNTAR支配 -</span>
+          </div>
+        </div>
+      </div>
+      <p id="hdr-desc" class="text-xs sm:text-sm text-gray-400 mt-3 max-w-2xl">
+        下の「個人ポジティブ」「個人ネガティブ」の各カードをクリックしてビルドを組めます。<br class="hidden sm:inline">
+        合計ポイントが <strong class="text-white">0以上（プラス含む）</strong> であれば出撃可能です。
+      </p>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- GLOBAL MODIFIERS (グローバル・モディファイア) -->
+    <!-- ========================================== -->
+    <section class="mb-8">
+      <div class="section-bar-global py-1.5 text-center mb-3 rounded">
+        <h2 class="font-oswald text-base sm:text-lg font-bold tracking-widest text-gray-200 uppercase">
+          GLOBAL MODIFIERS <span id="sec-global-sub" class="text-xs sm:text-sm font-sans font-normal text-gray-400 ml-2">（グローバル・モディファイア / 全員共通ルール）</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+        <!-- Global 1 -->
+        <div data-gid="g_untar" class="global-card card-bg rounded flex overflow-hidden">
+          <div class="icon-box-global w-14 sm:w-16 shrink-0 flex items-center justify-center text-gray-300 text-2xl">🌐</div>
+          <div class="p-2.5 flex-1">
+            <div class="card-title text-xs sm:text-sm font-bold text-gray-100 tracking-wide">UNTAR CONTROL <span class="text-[#63b3ed] font-normal">/ UNTAR支配</span></div>
+            <ul class="card-desc text-[11px] sm:text-xs text-gray-300 mt-1 space-y-0.5 list-disc list-inside leading-snug">
+              <li>タルコフ全域に国連軍（UN部隊）が出現。新ルールを破ったすべてのScav・PMCに敵対する</li>
+              <li>UN部隊は各マップの様々なエリアを制圧・管理している</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Global 2 -->
+        <div data-gid="g_tough" class="global-card card-bg rounded flex overflow-hidden">
+          <div class="icon-box-global w-14 sm:w-16 shrink-0 flex items-center justify-center text-gray-300 text-2xl">⏳</div>
+          <div class="p-2.5 flex-1">
+            <div class="card-title text-xs sm:text-sm font-bold text-gray-100 tracking-wide">TOUGH TIMES <span class="text-[#63b3ed] font-normal">/ 困難な時代</span></div>
+            <ul class="card-desc text-[11px] sm:text-xs text-gray-300 mt-1 space-y-0.5 list-disc list-inside leading-snug">
+              <li>脱出地点（Extract）へのアクセスが制限される</li>
+              <li>シーズン開始時、プレイヤーScavのクールダウン時間が大幅に増加する</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Global 3 -->
+        <div data-gid="g_peace" class="global-card card-bg rounded flex overflow-hidden">
+          <div class="icon-box-global w-14 sm:w-16 shrink-0 flex items-center justify-center text-gray-300 text-2xl">🕊️</div>
+          <div class="p-2.5 flex-1">
+            <div class="card-title text-xs sm:text-sm font-bold text-gray-100 tracking-wide">PEACE MARKET <span class="text-[#63b3ed] font-normal">/ ピース・マーケット</span></div>
+            <ul class="card-desc text-[11px] sm:text-xs text-gray-300 mt-1 space-y-0.5 list-disc list-inside leading-snug">
+              <li>新しいグローバルタスク完了後、全プレイヤーがフリマを利用可能になる</li>
+              <li>アイテム出品時の制限は最小限</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Global 4 -->
+        <div data-gid="g_noins" class="global-card card-bg rounded flex overflow-hidden">
+          <div class="icon-box-global w-14 sm:w-16 shrink-0 flex items-center justify-center text-gray-300 text-2xl">🛡️</div>
+          <div class="p-2.5 flex-1">
+            <div class="card-title text-xs sm:text-sm font-bold text-gray-100 tracking-wide">NO INSURANCE <span class="text-[#63b3ed] font-normal">/ 保険なし</span></div>
+            <ul class="card-desc text-[11px] sm:text-xs text-gray-300 mt-1 space-y-0.5 list-disc list-inside leading-snug">
+              <li>装備の保険は利用できない</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Global 5 -->
+        <div data-gid="g_supply" class="global-card card-bg rounded flex overflow-hidden">
+          <div class="icon-box-global w-14 sm:w-16 shrink-0 flex items-center justify-center text-gray-300 text-2xl">📦</div>
+          <div class="p-2.5 flex-1">
+            <div class="card-title text-xs sm:text-sm font-bold text-gray-100 tracking-wide">SUPPLY SHORTAGE <span class="text-[#63b3ed] font-normal">/ 物資不足</span></div>
+            <ul class="card-desc text-[11px] sm:text-xs text-gray-300 mt-1 space-y-0.5 list-disc list-inside leading-snug">
+              <li>タルコフ全域で食料、医療品、大型バックパック、爆発物が不足している</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Global 6 -->
+        <div data-gid="g_smart" class="global-card card-bg rounded flex overflow-hidden">
+          <div class="icon-box-global w-14 sm:w-16 shrink-0 flex items-center justify-center text-gray-300 text-2xl">🧠</div>
+          <div class="p-2.5 flex-1">
+            <div class="card-title text-xs sm:text-sm font-bold text-gray-100 tracking-wide">SMART PMCS <span class="text-[#63b3ed] font-normal">/ 優秀なPMC</span></div>
+            <ul class="card-desc text-[11px] sm:text-xs text-gray-300 mt-1 space-y-0.5 list-disc list-inside leading-snug">
+              <li>スキルの上昇速度が25%増加する</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PERSONAL POSITIVE (個人ポジティブ)           -->
+    <!-- ========================================== -->
+    <section class="mb-8">
+      <div class="section-bar-pos py-1.5 text-center mb-3 rounded">
+        <h2 class="font-oswald text-base sm:text-lg font-bold tracking-widest text-[#8ce09b] uppercase">
+          PERSONAL POSITIVE <span id="sec-pos-sub" class="text-xs sm:text-sm font-sans font-normal text-gray-300 ml-2">（個人ポジティブ / クリックで選択・マイナス値）</span>
+        </h2>
+      </div>
+
+      <!-- 元画像と同じ3列構成（PCでは3列表示・縦並び順を維持） -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+        
+        <!-- 1列目 -->
+        <div class="flex flex-col gap-2">
+          <!-- LOCKPICKER -->
+          <div data-id="lockpicker" data-points="-1" data-type="pos" data-name="LOCKPICKER / ピッキング師" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🔓</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">LOCKPICKER (-1) <span class="text-gray-300 font-normal">/ ピッキング師</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>マルチツールを使用してドアやコンテナの南京錠をピッキング可能になる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- ENHANCED SECURE CONTAINER -->
+          <div data-id="enhanced_container" data-points="-2" data-type="pos" data-name="ENHANCED SECURE CONTAINER / 強化コンテナ" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">💼</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">ENHANCED SECURE CONTAINER (-2) <span class="text-gray-300 font-normal">/ 強化コンテナ</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>死亡後も中のアイテムのインレイド（FIR）状態を維持できる「Epsilon X」を所持して開始</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- KLEPTOMANIAC -->
+          <div data-id="kleptomaniac" data-points="-2" data-type="pos" data-name="KLEPTOMANIAC / 窃盗癖" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🤏</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">KLEPTOMANIAC (-2) <span class="text-gray-300 font-normal">/ 窃盗癖</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Search（捜索）」スキルLv.40で開始</li>
+                <li>同スキルの成長速度が100%増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- COLD-BLOODED -->
+          <div data-id="cold_blooded" data-points="-4" data-type="pos" data-name="COLD-BLOODED / 冷血" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">❄️</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">COLD-BLOODED (-4) <span class="text-gray-300 font-normal">/ 冷血</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>レイド中の体温が低くなり、サーマルサイトから非常に視認されにくくなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- MARATHON RUNNER -->
+          <div data-id="marathon_runner" data-points="-5" data-type="pos" data-name="MARATHON RUNNER / マラソンランナー" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🏃</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">MARATHON RUNNER (-5) <span class="text-gray-300 font-normal">/ マラソンランナー</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>腕と脚のスタミナ消費速度が25%遅くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- JUICE TIME -->
+          <div data-id="juice_time" data-points="-1" data-type="pos" data-name="JUICE TIME / ジュースの時間" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🧃</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">JUICE TIME (-1) <span class="text-gray-300 font-normal">/ ジュースの時間</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>ジュース飲料を飲むと240秒間「鎮痛（Painkiller）」効果を得る</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- STREET TAX -->
+          <div data-id="street_tax" data-points="-2" data-type="pos" data-name="STREET TAX / みかじめ料" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">💵</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">STREET TAX (-2) <span class="text-gray-300 font-normal">/ みかじめ料</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>週に一度、一部のScavが多額の保護費（みかじめ料）を支払ってくる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- HERCULES -->
+          <div data-id="hercules" data-points="-6" data-type="pos" data-name="HERCULES / ヘラクレス" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🏋️</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">HERCULES (-6) <span class="text-gray-300 font-normal">/ ヘラクレス</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Strength（筋力）」と「Endurance（持久力）」がLv.20で開始</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- PRODIGY -->
+          <div data-id="prodigy" data-points="-4" data-type="pos" data-name="PRODIGY / 神童" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🎓</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">PRODIGY (-4) <span class="text-gray-300 font-normal">/ 神童</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>スキルの上昇速度が20%増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- STURDY BONES -->
+          <div data-id="sturdy_bones" data-points="-2" data-type="pos" data-name="STURDY BONES / 頑丈な骨" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🦴</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">STURDY BONES (-2) <span class="text-gray-300 font-normal">/ 頑丈な骨</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>四肢の骨折確率が50%減少</li>
+                <li>高所からの落下ダメージが30%減少</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- LUCKY -->
+          <div data-id="lucky" data-points="-1" data-type="pos" data-name="LUCKY / 幸運" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🍀</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">LUCKY (-1) <span class="text-gray-300 font-normal">/ 幸運</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li><em>Audentes fortuna iuvat!</em>（運命の女神は勇者に味方する！）</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+        </div>
+
+        <!-- 2列目 -->
+        <div class="flex flex-col gap-2">
+          <!-- INTROVERT -->
+          <div data-id="introvert" data-points="-1" data-type="pos" data-name="INTROVERT / 内向的" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🐈</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">INTROVERT (-1) <span class="text-gray-300 font-normal">/ 内向的</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>ソロプレイ時、スキルの上昇速度が30%増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- FAST CRAFTING -->
+          <div data-id="fast_crafting" data-points="-2" data-type="pos" data-name="FAST CRAFTING / 高速クラフト" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🔨</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">FAST CRAFTING (-2) <span class="text-gray-300 font-normal">/ 高速クラフト</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Crafting（クラフト）」スキルLv.40で開始</li>
+                <li>同スキルの成長速度が100%増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- FRIEND'S EXTRACT -->
+          <div data-id="friends_extract" data-points="-2" data-type="pos" data-name="FRIEND'S EXTRACT / 友人の脱出地点" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🚪</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">FRIEND'S EXTRACT (-2) <span class="text-gray-300 font-normal">/ 友人の脱出地点</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>すべてのPMCレイドでScav専用脱出地点が1つ追加で利用可能（該当マップにある場合）</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- ADVANCED HIDEOUT -->
+          <div data-id="advanced_hideout" data-points="-4" data-type="pos" data-name="ADVANCED HIDEOUT / 高度なハイドアウト" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🏠</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">ADVANCED HIDEOUT (-4) <span class="text-gray-300 font-normal">/ 高度なハイドアウト</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>ビットコインファーム、ジム、Scavケース等が建設済みの状態で開始</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- SAFECRACKER -->
+          <div data-id="safecracker" data-points="-4" data-type="pos" data-name="SAFECRACKER / 金庫破り" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🔑</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">SAFECRACKER (-4) <span class="text-gray-300 font-normal">/ 金庫破り</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>機械式の鍵とキーカード使用時、50%の確率で耐久値を消費しない</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- SAILOR'S NOSTALGIA -->
+          <div data-id="sailors_nostalgia" data-points="-2" data-type="pos" data-name="SAILOR'S NOSTALGIA / 船乗りの郷愁" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">⚓</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">SAILOR'S NOSTALGIA (-2) <span class="text-gray-300 font-normal">/ 船乗りの郷愁</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>魚の缶詰を食べると600秒間「体力自動回復 (+1)」効果を得る</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- THE TARKOV SHOOTER -->
+          <div data-id="tarkov_shooter" data-points="-2" data-type="pos" data-name="THE TARKOV SHOOTER / タルコフシューター" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🎯</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">THE TARKOV SHOOTER (-2) <span class="text-gray-300 font-normal">/ タルコフシューター</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Bolt-action Rifles（ボルトアクションライフル）」スキルLv.51で開始</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- SPRINTER -->
+          <div data-id="sprinter" data-points="-4" data-type="pos" data-name="SPRINTER / スプリンター" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">👟</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">SPRINTER (-4) <span class="text-gray-300 font-normal">/ スプリンター</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>走行速度が15%上昇する</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- HYPODIPSIA -->
+          <div data-id="hypodipsia" data-points="-2" data-type="pos" data-name="HYPODIPSIA / 渇水耐性" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">💧</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">HYPODIPSIA (-2) <span class="text-gray-300 font-normal">/ 渇水耐性</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>水分（Hydration）の消費速度が50%遅くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- AVERAGE -->
+          <div data-id="average" data-points="-8" data-type="pos" data-name="AVERAGE / 平均的" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">⚖️</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">AVERAGE (-8) <span class="text-gray-300 font-normal">/ 平均的</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>全キャラクタースキルがLv.30に設定されるが、それ以上レベルを上げられなくなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+        </div>
+
+        <!-- 3列目 -->
+        <div class="flex flex-col gap-2">
+          <!-- TAP, RACK, ROLL -->
+          <div data-id="tap_rack_roll" data-points="-1" data-type="pos" data-name="TAP, RACK, ROLL / タップ・ラック・ロール" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🔫</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">TAP, RACK, ROLL (-1) <span class="text-gray-300 font-normal">/ タップ・ラック・ロール</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Troubleshooting（トラブルシューティング）」スキルLv.40で開始</li>
+                <li>ジャム（動作不良）解除時に事前の点検（インスペクション）が不要になる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- REF'S BUILDERS -->
+          <div data-id="refs_builders" data-points="-2" data-type="pos" data-name="REF'S BUILDERS / Refの建築家" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🪙</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">REF'S BUILDERS (-2) <span class="text-gray-300 font-normal">/ Refの建築家</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>GPコインとレガメダル（Lega Medals）を使ってハイドアウト設備を建設できる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- HEAVYWEIGHT -->
+          <div data-id="heavyweight" data-points="-2" data-type="pos" data-name="HEAVYWEIGHT / ヘビー級" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">💪</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">HEAVYWEIGHT (-2) <span class="text-gray-300 font-normal">/ ヘビー級</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>移動速度が5%低下</li>
+                <li>最大積載重量が30kg増加（重量オーバーのしきい値も5kg増加）</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- PEACEKEEPER'S INSURANCE -->
+          <div data-id="pk_insurance" data-points="-4" data-type="pos" data-name="PEACEKEEPER'S INSURANCE / PKの保険" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">💶</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">PEACEKEEPER'S INSURANCE (-4) <span class="text-gray-300 font-normal">/ PKの保険</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>ピースキーパーがユーロ（EUR）払いで装備の保険サービスを提供する</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- BUSHBORNE -->
+          <div data-id="bushborne" data-points="-4" data-type="pos" data-name="BUSHBORNE / 藪の申し子" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🌿</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">BUSHBORNE (-4) <span class="text-gray-300 font-normal">/ 藪の申し子</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>草木（茂み）の中を歩く際の騒音が75%減少し、移動速度低下も発生しない</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- YOUTH -->
+          <div data-id="youth" data-points="-6" data-type="pos" data-name="YOUTH / 若さ" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🧢</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">YOUTH (-6) <span class="text-gray-300 font-normal">/ 若さ</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>エネルギーの消費速度が20%遅くなる</li>
+                <li>腕と脚のスタミナ最大値が25ポイント増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- DIET -->
+          <div data-id="diet" data-points="-1" data-type="pos" data-name="DIET / ダイエット" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🍏</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">DIET (-1) <span class="text-gray-300 font-normal">/ ダイエット</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>すべての食料・飲料（Provisions）の消費リソースが50%減少</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- THROMBOPHILIA -->
+          <div data-id="thrombophilia" data-points="-6" data-type="pos" data-name="THROMBOPHILIA / 血栓傾向" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">🩹</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">THROMBOPHILIA (-6) <span class="text-gray-300 font-normal">/ 血栓傾向</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>出血の発生確率が100%減少（出血しなくなる）</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- POLYPHAGIA -->
+          <div data-id="polyphagia" data-points="-2" data-type="pos" data-name="POLYPHAGIA / 大食漢" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">⚡</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">POLYPHAGIA (-2) <span class="text-gray-300 font-normal">/ 大食漢</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>エネルギーの消費速度が45%遅くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- KAPPA PROTOCOL -->
+          <div data-id="kappa_protocol" data-points="-8" data-type="pos" data-name="KAPPA PROTOCOL / カッパ・プロトコル" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-pos w-14 shrink-0 flex items-center justify-center text-[#8ce09b] text-xl">👑</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#a3e6b0] pr-5">KAPPA PROTOCOL (-8) <span class="text-gray-300 font-normal">/ カッパ・プロトコル</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Secure container Kappa」を所持した状態でスタート</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#38a169] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PERSONAL NEGATIVE (個人ネガティブ)           -->
+    <!-- ========================================== -->
+    <section class="mb-8">
+      <div class="section-bar-neg py-1.5 text-center mb-3 rounded">
+        <h2 class="font-oswald text-base sm:text-lg font-bold tracking-widest text-[#f28b82] uppercase">
+          PERSONAL NEGATIVE <span id="sec-neg-sub" class="text-xs sm:text-sm font-sans font-normal text-gray-300 ml-2">（個人ネガティブ / クリックで選択・プラス値）</span>
+        </h2>
+      </div>
+
+      <!-- 元画像と同じ3列構成 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+        
+        <!-- 1列目 -->
+        <div class="flex flex-col gap-2">
+          <!-- EXTROVERT -->
+          <div data-id="extrovert" data-points="3" data-type="neg" data-name="EXTROVERT / 外向的" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🐕</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">EXTROVERT (+3) <span class="text-gray-300 font-normal">/ 外向的</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>ソロプレイ時、スキルの上昇速度が30%低下</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- LOOSE TONGUE -->
+          <div data-id="loose_tongue" data-points="2" data-type="neg" data-name="LOOSE TONGUE / おしゃべり" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🤬</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">LOOSE TONGUE (+2) <span class="text-gray-300 font-normal">/ おしゃべり</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>何らかのアクションを起こした後、時折勝手にボイスライン（独り言）を発する</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- ZERO TO HERO -->
+          <div data-id="zero_to_hero" data-points="2" data-type="neg" data-name="ZERO TO HERO / ゼロ・トゥ・ヒーロー" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">📭</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">ZERO TO HERO (+2) <span class="text-gray-300 font-normal">/ ゼロ・トゥ・ヒーロー</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>完全に空っぽのキャラクター（初期装備・ボーナスアイテム一切なし）で開始</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- DEADLINE -->
+          <div data-id="deadline" data-points="4" data-type="neg" data-name="DEADLINE / デッドライン" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">💀</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">DEADLINE (+4) <span class="text-gray-300 font-normal">/ デッドライン</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>30日以内にいずれかのエンディングに到達必須。未達成の場合シーズンキャラはワイプされる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- OSTEOPOROSIS -->
+          <div data-id="osteoporosis" data-points="2" data-type="neg" data-name="OSTEOPOROSIS / 骨粗鬆症" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">💥</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">OSTEOPOROSIS (+2) <span class="text-gray-300 font-normal">/ 骨粗鬆症</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>四肢の骨折確率が50%増加</li>
+                <li>高所からの落下ダメージが50%増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- INCOMPETENT -->
+          <div data-id="incompetent" data-points="8" data-type="neg" data-name="INCOMPETENT / 無能" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">📉</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">INCOMPETENT (+8) <span class="text-gray-300 font-normal">/ 無能</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>スキルの上昇速度が100%低下（スキルが一切成長しない）</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- PERSONALITY VACUUM -->
+          <div data-id="personality_vacuum" data-points="6" data-type="neg" data-name="PERSONALITY VACUUM / 魅力ゼロ" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">😒</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">PERSONALITY VACUUM (+6) <span class="text-gray-300 font-normal">/ 魅力ゼロ</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Charisma（カリスマ）」スキルを上げられなくなる</li>
+                <li>トレーダーの全アイテム・サービスの価格が50%高くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- BROKEN SECURE CONTAINER -->
+          <div data-id="broken_container" data-points="6" data-type="neg" data-name="BROKEN SECURE CONTAINER / 破損コンテナ" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🔓</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">BROKEN SECURE CONTAINER (+6) <span class="text-gray-300 font-normal">/ 破損コンテナ</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>コンテナに入れられる物が現金・鍵・ドッグタグ・注射器・特殊装備・一部コンテナ・BP書類のみに制限</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- UNLUCKY -->
+          <div data-id="unlucky" data-points="1" data-type="neg" data-name="UNLUCKY / 不運" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🥀</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">UNLUCKY (+1) <span class="text-gray-300 font-normal">/ 不運</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>あなたの不運は、時として悲惨な結果を招くことがある</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+        </div>
+
+        <!-- 2列目 -->
+        <div class="flex flex-col gap-2">
+          <!-- SCHIZO -->
+          <div data-id="schizo" data-points="2" data-type="neg" data-name="SCHIZO / 幻聴" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">👂</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">SCHIZO (+2) <span class="text-gray-300 font-normal">/ 幻聴</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>キャラクターに時折、実際には存在しない音（幻聴）が聞こえるようになる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- THREE-FINGERED -->
+          <div data-id="three_fingered" data-points="2" data-type="neg" data-name="THREE-FINGERED / 三本指" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🤟</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">THREE-FINGERED (+2) <span class="text-gray-300 font-normal">/ 三本指</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>リロード時、15%の確率でマガジンを地面に落とす</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- SHAKY AIM -->
+          <div data-id="shaky_aim" data-points="3" data-type="neg" data-name="SHAKY AIM / 震える照準" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">😵‍💫</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">SHAKY AIM (+3) <span class="text-gray-300 font-normal">/ 震える照準</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>3秒以上エイムし続けると、手の震え・痛み・トンネルビジョン（視野狭窄）が発生する</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- COAGULOPATHY -->
+          <div data-id="coagulopathy" data-points="3" data-type="neg" data-name="COAGULOPATHY / 血液凝固障害" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🩸</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">COAGULOPATHY (+3) <span class="text-gray-300 font-normal">/ 血液凝固障害</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>あらゆる出血が即座に「重度出血（Heavy Bleeding）」になる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- EXHAUSTION -->
+          <div data-id="exhaustion" data-points="5" data-type="neg" data-name="EXHAUSTION / 疲労困憊" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">😩</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">EXHAUSTION (+5) <span class="text-gray-300 font-normal">/ 疲労困憊</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>腕と脚のスタミナ最大値が20ポイント減少</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- POLYDIPSIA -->
+          <div data-id="polydipsia" data-points="1" data-type="neg" data-name="POLYDIPSIA / 多飲症" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🥤</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">POLYDIPSIA (+1) <span class="text-gray-300 font-normal">/ 多飲症</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>水分（Hydration）の消費速度が25%速くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- DR. JEKYLL -->
+          <div data-id="dr_jekyll" data-points="2" data-type="neg" data-name="DR. JEKYLL / ジキル博士" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🐾</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">DR. JEKYLL (+2) <span class="text-gray-300 font-normal">/ ジキル博士</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「Fresh Wound（新しい傷）」状態が付与されると、そのレイドが終了するまで解除されない</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- NO FLEA MARKET -->
+          <div data-id="no_flea" data-points="8" data-type="neg" data-name="NO FLEA MARKET / フリマ禁止" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🚫</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">NO FLEA MARKET (+8) <span class="text-gray-300 font-normal">/ フリマ禁止</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>フリーマーケットでのプレイヤー間取引が無効化される</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+        </div>
+
+        <!-- 3列目 -->
+        <div class="flex flex-col gap-2">
+          <!-- NO REPAIRS -->
+          <div data-id="no_repairs" data-points="2" data-type="neg" data-name="NO REPAIRS / 修理不可" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🔧</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">NO REPAIRS (+2) <span class="text-gray-300 font-normal">/ 修理不可</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>トレーダーを通じてアイテムを修理できなくなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- NO LOVE FROM FENCE -->
+          <div data-id="no_love_fence" data-points="2" data-type="neg" data-name="NO LOVE FROM FENCE / フェンスの不興" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">👺</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">NO LOVE FROM FENCE (+2) <span class="text-gray-300 font-normal">/ フェンスの不興</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>フェンス（Fence）の友好度が「-7.0」の状態でスタート</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- NO SCAV RUNS -->
+          <div data-id="no_scav_runs" data-points="3" data-type="neg" data-name="NO SCAV RUNS / Scav出撃不可" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🚷</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">NO SCAV RUNS (+3) <span class="text-gray-300 font-normal">/ Scav出撃不可</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>プレイヤーScavとしてプレイできなくなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- HEMOPHILIA -->
+          <div data-id="hemophilia" data-points="2" data-type="neg" data-name="HEMOPHILIA / 血友病" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">💉</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">HEMOPHILIA (+2) <span class="text-gray-300 font-normal">/ 血友病</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>出血が発生する確率が70%増加する（※原文ロシア語表記より翻訳）</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- WELL THAT HURT! -->
+          <div data-id="well_that_hurt" data-points="1" data-type="neg" data-name="WELL THAT HURT! / 痛っ、こりゃ効く！" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">💊</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">WELL THAT HURT! (+1) <span class="text-gray-300 font-normal">/ 痛っ、こりゃ効く！</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>すべての医療キット（Medkit）の消費リソースが33%増加</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- CHRONIC FATIGUE SYNDROME -->
+          <div data-id="chronic_fatigue" data-points="1" data-type="neg" data-name="CHRONIC FATIGUE SYNDROME / 慢性疲労" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🪫</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">CHRONIC FATIGUE SYNDROME (+1) <span class="text-gray-300 font-normal">/ 慢性疲労</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>エネルギーの消費速度が20%速くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- ALLERGIC -->
+          <div data-id="allergic" data-points="2" data-type="neg" data-name="ALLERGIC / アレルギー体質" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">🤧</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">ALLERGIC (+2) <span class="text-gray-300 font-normal">/ アレルギー体質</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>「食料・飲料」または「医療品」カテゴリーの中からランダムな4アイテムにアレルギーを持つ</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+
+          <!-- THIRD LEG -->
+          <div data-id="third_leg" data-points="1" data-type="neg" data-name="THIRD LEG / 第三の足" class="mod-card card-bg card-selectable rounded flex overflow-hidden relative">
+            <div class="icon-box-neg w-14 shrink-0 flex items-center justify-center text-[#f28b82] text-xl">⚖️</div>
+            <div class="p-2 flex-1">
+              <div class="text-xs font-bold text-[#f69c94] pr-5">THIRD LEG (+1) <span class="text-gray-300 font-normal">/ 第三の足</span></div>
+              <ul class="text-[11px] text-gray-300 mt-0.5 list-disc list-inside leading-tight">
+                <li>移動速度が2%低下</li>
+                <li>セラピスト（Therapist）からのアイテム購入価格が5%安くなる</li>
+              </ul>
+            </div>
+            <span class="check-badge hidden absolute top-1.5 right-1.5 text-[10px] font-bold bg-[#e53e3e] text-white px-1.5 py-0.2 rounded">選択中</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- フッター（権利表記・免責事項） -->
+    <footer class="border-t border-gray-800 pt-5 pb-4 text-xs text-gray-400 space-y-3">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div id="ftr-notice" class="border-l-2 border-[#4ea8de] pl-2.5 text-gray-300">
+          ※バランス調整のため、シーズン開始前にモディファイアの数値や仕様が変更される場合があります。
+        </div>
+        <div class="font-oswald tracking-widest text-gray-300 text-sm font-bold shrink-0">
+          ESCAPE FROM TARKOV - SEASON 2
+        </div>
+      </div>
+
+      <!-- 権利帰属・免責事項ボックス -->
+      <div class="bg-[#181b1e] border border-gray-800 rounded p-3.5 text-[11px] text-gray-400 leading-relaxed space-y-2.5">
+        <div class="space-y-1">
+          <p class="font-bold text-gray-300">【権利表記・免責事項 / Copyright & Disclaimer】</p>
+          <p>
+            • 本サイトはプレイヤーによる非公式のファンメイド・デモンストレーションツールであり、Battlestate Games Limited とは一切関係ありません。
+          </p>
+          <p>
+            • 『Escape from Tarkov』および関連するすべての名称・アイコン・ゲーム仕様等の著作権および知的財産権は、すべて <strong>Battlestate Games Limited</strong> に帰属します。
+          </p>
+          <p>
+            • 掲載されている数値や効果は公式公開画像（Season 2: UNTAR CONTROL プレビュー）に基づいていますが、バランス調整により正式リリース時に変更される可能性があります。
+          </p>
+        </div>
+
+        <div class="border-t border-gray-800/80 pt-2 text-gray-500 space-y-1">
+          <p>
+            • This website is an unofficial fan-made simulator and is not affiliated with, endorsed, sponsored, or specifically approved by Battlestate Games Limited.
+          </p>
+          <p>
+            • <em>Escape from Tarkov</em> and all related logos, names, icons, and game assets are trademarks or registered trademarks of <strong>Battlestate Games Limited</strong>. All rights reserved.
+          </p>
+          <p>
+            • Modifier values and mechanics are based on pre-season preview materials and are subject to change for balancing purposes before or after release.
+          </p>
+        </div>
+
+        <div class="border-t border-gray-800/80 pt-2 flex flex-wrap items-center justify-between gap-2 text-gray-300">
+          <span>
+            🛠️ 翻訳ミスや動作のバグ・不具合などがあれば、制作者のXアカウントまでお知らせください：
+            <a href="https://x.com/green_tea8901" target="_blank" rel="noopener noreferrer" class="text-[#4ea8de] hover:underline font-bold ml-1">@green_tea8901</a>
+          </span>
+          <span class="text-[10px] text-gray-500">Bug reports & feedback: <a href="https://x.com/green_tea8901" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:underline">@green_tea8901</a></span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 画面下部固定・ポイント計算＆ビルド操作バー    -->
+  <!-- ========================================== -->
+  <div class="fixed bottom-0 left-0 right-0 bg-[#121518]/95 backdrop-blur-md border-t border-gray-700 shadow-[0_-8px_25px_rgba(0,0,0,0.75)] z-50">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+      
+      <!-- 左側：合計ポイントと出撃可能判定 -->
+      <div class="flex items-center gap-3 sm:gap-5">
+        <div class="flex items-baseline gap-2">
+          <span id="lbl-total-pts" class="text-xs sm:text-sm text-gray-400 font-bold">合計ポイント:</span>
+          <span id="total-points" class="font-oswald text-2xl sm:text-3xl font-bold text-[#68d391]">0</span>
+          <span class="text-xs text-gray-400">pt</span>
+        </div>
+
+        <div id="status-badge" class="px-2.5 py-1 rounded text-xs sm:text-sm font-bold bg-[#22543d] text-[#9ae6b4] border border-[#38a169]">
+          ✔ 出撃可能（0pt以上）
+        </div>
+
+        <div class="hidden lg:flex items-center gap-3 text-xs text-gray-400 border-l border-gray-700 pl-4">
+          <span><span id="lbl-pos-short">ポジティブ</span>: <strong id="pos-count" class="text-[#8ce09b]">0</strong><span class="unit-count">個</span> (<span id="pos-pts">0</span>pt)</span>
+          <span><span id="lbl-neg-short">ネガティブ</span>: <strong id="neg-count" class="text-[#f28b82]">0</strong><span class="unit-count">個</span> (<span id="neg-pts">+0</span>pt)</span>
+        </div>
+      </div>
+
+      <!-- 右側：アクションボタン -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <button id="btn-summary" type="button" class="px-2.5 sm:px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 text-xs sm:text-sm font-bold transition">
+          <span id="txt-summary">構成確認</span> (<span id="total-count">0</span>)
+        </button>
+        <button id="btn-share-url" type="button" class="px-2.5 sm:px-3 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-[#63b3ed] border border-gray-600 text-xs sm:text-sm font-bold transition" title="現在のビルドを復元できるURLをコピー">
+          URLコピー
+        </button>
+        <button id="btn-post-x" type="button" class="px-2.5 sm:px-3 py-1.5 rounded bg-black hover:bg-gray-900 text-white border border-gray-600 text-xs sm:text-sm font-bold transition flex items-center gap-1" title="X（旧Twitter）にビルドを投稿">
+          <span class="text-sm leading-none">𝕏</span><span id="txt-post-x" class="hidden sm:inline">で共有</span>
+        </button>
+        <button id="btn-copy" type="button" class="hidden md:inline-block px-3 py-1.5 rounded bg-[#2b6cb0] hover:bg-[#3182ce] text-white text-xs sm:text-sm font-bold transition">
+          テキストコピー
+        </button>
+        <button id="btn-reset" type="button" class="px-2.5 sm:px-3 py-1.5 rounded bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-800/70 text-xs sm:text-sm font-bold transition">
+          リセット
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 選択中の構成確認モーダル -->
+  <div id="summary-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-[#1b1f23] border border-gray-700 rounded-lg max-w-lg w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-3">
+        <h3 id="modal-title" class="font-bold text-base sm:text-lg text-white">選択中のモディファイア構成</h3>
+        <button id="btn-close-modal" type="button" class="text-gray-400 hover:text-white text-xl leading-none px-2">&times;</button>
+      </div>
+      
+      <div id="modal-body" class="max-h-72 overflow-y-auto space-y-3 text-xs sm:text-sm pr-1">
+        <!-- JSで動的に挿入 -->
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-gray-700 flex flex-wrap items-center justify-between gap-2">
+        <div class="text-xs text-gray-400">
+          <span id="modal-lbl-total">合計</span>: <strong id="modal-total-pts" class="text-base text-white">0</strong> pt
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="btn-modal-url" type="button" class="px-2.5 py-1.5 rounded bg-gray-800 hover:bg-gray-700 text-[#63b3ed] border border-gray-600 text-xs font-bold">
+            URLコピー
+          </button>
+          <button id="btn-modal-x" type="button" class="px-2.5 py-1.5 rounded bg-black hover:bg-gray-900 text-white border border-gray-600 text-xs font-bold">
+            𝕏 で共有
+          </button>
+          <button id="btn-modal-copy" type="button" class="px-3 py-1.5 rounded bg-[#2b6cb0] hover:bg-[#3182ce] text-white text-xs font-bold">
+            テキストコピー
+          </button>
+          <button id="btn-modal-ok" type="button" class="px-3 py-1.5 rounded bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold">
+            閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知（alertの代わり） -->
+  <div id="toast" class="fixed top-5 right-5 bg-[#2b6cb0] text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
+    クリップボードにコピーしました！
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.mod-card');
+      const selectedIds = new Set();
+      const cardIdList = Array.from(cards).map(c => c.dataset.id);
+      let currentLang = 'ja'; // 'ja' または 'en'
+
+      // 各カード・UIのバイリンガル辞書データ
+      const i18nData = {
+        // Global Modifiers
+        g_untar: {
+          enTitle: 'UNTAR CONTROL',
+          enDesc: [
+            'UN troops appear throughout Tarkov. They\'re hostile toward all Scavs and PMCs who break the new rules',
+            'UN troops control various areas across locations'
+          ]
+        },
+        g_tough: {
+          enTitle: 'TOUGH TIMES',
+          enDesc: [
+            'Access to extracts is limited',
+            'At the start of the season, the Player Scav respawn timer is significantly increased'
+          ]
+        },
+        g_peace: {
+          enTitle: 'PEACE MARKET',
+          enDesc: [
+            'Flea Market becomes available to all players after completing a new global task',
+            'Minimal restrictions on listing items'
+          ]
+        },
+        g_noins: {
+          enTitle: 'NO INSURANCE',
+          enDesc: ['Insurance is unavailable']
+        },
+        g_supply: {
+          enTitle: 'SUPPLY SHORTAGE',
+          enDesc: ['Tarkov is experiencing shortages of food, medical supplies, large backpacks, and explosives']
+        },
+        g_smart: {
+          enTitle: 'SMART PMCS',
+          enDesc: ['Skill progression speed is increased by 25%']
+        },
+
+        // Personal Positive
+        lockpicker: {
+          enTitle: 'LOCKPICKER (-1)',
+          enDesc: ['Unlock the ability to pick padlocks on doors and containers using a multitool']
+        },
+        enhanced_container: {
+          enTitle: 'ENHANCED SECURE CONTAINER (-2)',
+          enDesc: ['Start with Secure Container Epsilon X with the ability to retain the FIR status of items inside even after death']
+        },
+        kleptomaniac: {
+          enTitle: 'KLEPTOMANIAC (-2)',
+          enDesc: ['Start with the Search skill at level 40', 'This skill\'s progression speed is increased by 100%']
+        },
+        cold_blooded: {
+          enTitle: 'COLD-BLOODED (-4)',
+          enDesc: ['Your in-raid body temperature is lower, making you significantly harder to see with thermal optics']
+        },
+        marathon_runner: {
+          enTitle: 'MARATHON RUNNER (-5)',
+          enDesc: ['Arm and leg stamina is consumed 25% slower']
+        },
+        juice_time: {
+          enTitle: 'JUICE TIME (-1)',
+          enDesc: ['Consuming a juice drink grants the Painkiller effect for 240 seconds']
+        },
+        street_tax: {
+          enTitle: 'STREET TAX (-2)',
+          enDesc: ['Once per week, some Scavs pay you a large amount of protection money']
+        },
+        hercules: {
+          enTitle: 'HERCULES (-6)',
+          enDesc: ['Start with the Strength and Endurance skills at level 20']
+        },
+        prodigy: {
+          enTitle: 'PRODIGY (-4)',
+          enDesc: ['Skill progression speed is increased by 20%']
+        },
+        sturdy_bones: {
+          enTitle: 'STURDY BONES (-2)',
+          enDesc: ['Limb fracture chance is decreased by 50%', 'Falling from heights deals 30% less damage']
+        },
+        lucky: {
+          enTitle: 'LUCKY (-1)',
+          enDesc: ['<em>Audentes fortuna iuvat!</em>']
+        },
+        introvert: {
+          enTitle: 'INTROVERT (-1)',
+          enDesc: ['Skill progression speed is increased by 30% when playing solo']
+        },
+        fast_crafting: {
+          enTitle: 'FAST CRAFTING (-2)',
+          enDesc: ['Start with the Crafting skill at level 40', 'This skill\'s progression speed is increased by 100%']
+        },
+        friends_extract: {
+          enTitle: 'FRIEND\'S EXTRACT (-2)',
+          enDesc: ['One additional Scav extract is available in every PMC raid (if the location has them)']
+        },
+        advanced_hideout: {
+          enTitle: 'ADVANCED HIDEOUT (-4)',
+          enDesc: ['Start with pre-built Hideout zones: Bitcoin Farm, Gym, Scav Case, and more']
+        },
+        safecracker: {
+          enTitle: 'SAFECRACKER (-4)',
+          enDesc: ['Mechanical keys and keycards have a 50% chance not to lose durability when used']
+        },
+        sailors_nostalgia: {
+          enTitle: 'SAILOR\'S NOSTALGIA (-2)',
+          enDesc: ['Consuming canned fish grants the Health Regeneration (+1) effect for 600 seconds']
+        },
+        tarkov_shooter: {
+          enTitle: 'THE TARKOV SHOOTER (-2)',
+          enDesc: ['Start with the Bolt-action Rifles skill at level 51']
+        },
+        sprinter: {
+          enTitle: 'SPRINTER (-4)',
+          enDesc: ['Running speed is increased by 15%']
+        },
+        hypodipsia: {
+          enTitle: 'HYPODIPSIA (-2)',
+          enDesc: ['Hydration is consumed 50% slower']
+        },
+        average: {
+          enTitle: 'AVERAGE (-8)',
+          enDesc: ['All character skills are set to level 30 but cannot be leveled further']
+        },
+        tap_rack_roll: {
+          enTitle: 'TAP, RACK, ROLL (-1)',
+          enDesc: ['Start with the Troubleshooting skill at level 40', 'Malfunction clearing no longer requires inspection']
+        },
+        refs_builders: {
+          enTitle: 'REF\'S BUILDERS (-2)',
+          enDesc: ['Build Hideout zones with GP coins and Lega Medals']
+        },
+        heavyweight: {
+          enTitle: 'HEAVYWEIGHT (-2)',
+          enDesc: ['Movement speed is reduced by 5%', 'Maximum carry weight is increased by 30 kg (Overweight threshold increased by 5 kg)']
+        },
+        pk_insurance: {
+          enTitle: 'PEACEKEEPER\'S INSURANCE (-4)',
+          enDesc: ['Peacekeeper provides gear insurance service for Euros']
+        },
+        bushborne: {
+          enTitle: 'BUSHBORNE (-4)',
+          enDesc: ['Walking in vegetation generates 75% less noise and doesn\'t inflict movement slowdown']
+        },
+        youth: {
+          enTitle: 'YOUTH (-6)',
+          enDesc: ['Energy is consumed 20% slower', 'Arm and leg stamina is increased by 25 points']
+        },
+        diet: {
+          enTitle: 'DIET (-1)',
+          enDesc: ['All provisions consume 50% less resource']
+        },
+        thrombophilia: {
+          enTitle: 'THROMBOPHILIA (-6)',
+          enDesc: ['Bleeding chance is decreased by 100%']
+        },
+        polyphagia: {
+          enTitle: 'POLYPHAGIA (-2)',
+          enDesc: ['Energy is consumed 45% slower']
+        },
+        kappa_protocol: {
+          enTitle: 'KAPPA PROTOCOL (-8)',
+          enDesc: ['Start with Secure container Kappa']
+        },
+
+        // Personal Negative
+        extrovert: {
+          enTitle: 'EXTROVERT (+3)',
+          enDesc: ['Skill progression speed is decreased by 30% when playing solo']
+        },
+        loose_tongue: {
+          enTitle: 'LOOSE TONGUE (+2)',
+          enDesc: ['Your character occasionally does a voice line after performing any action']
+        },
+        zero_to_hero: {
+          enTitle: 'ZERO TO HERO (+2)',
+          enDesc: ['Start with a completely empty character; no bonus items']
+        },
+        deadline: {
+          enTitle: 'DEADLINE (+4)',
+          enDesc: ['You must reach any ending within 30 days. Failure to meet the deadline results in a wipe for the seasonal character']
+        },
+        osteoporosis: {
+          enTitle: 'OSTEOPOROSIS (+2)',
+          enDesc: ['Limb fracture chance is increased by 50%', 'Falling from heights deals 50% more damage']
+        },
+        incompetent: {
+          enTitle: 'INCOMPETENT (+8)',
+          enDesc: ['Skill progression speed is decreased by 100%']
+        },
+        personality_vacuum: {
+          enTitle: 'PERSONALITY VACUUM (+6)',
+          enDesc: ['Charisma skill cannot be increased', 'All trader items and services cost 50% more']
+        },
+        broken_container: {
+          enTitle: 'BROKEN SECURE CONTAINER (+6)',
+          enDesc: ['Secure container can only be filled with cash, keys, dogtags, stimulants, special equipment, certain containers, and Battle Pass documents']
+        },
+        unlucky: {
+          enTitle: 'UNLUCKY (+1)',
+          enDesc: ['Your bad luck can sometimes have dire consequences']
+        },
+        schizo: {
+          enTitle: 'SCHIZO (+2)',
+          enDesc: ['Your character occasionally hears phantom sounds']
+        },
+        three_fingered: {
+          enTitle: 'THREE-FINGERED (+2)',
+          enDesc: ['15% chance of dropping a magazine when reloading']
+        },
+        shaky_aim: {
+          enTitle: 'SHAKY AIM (+3)',
+          enDesc: ['Aiming for more than 3 seconds causes hand tremors, pain, and tunnel vision']
+        },
+        coagulopathy: {
+          enTitle: 'COAGULOPATHY (+3)',
+          enDesc: ['Any bleeding immediately becomes a Heavy Bleeding']
+        },
+        exhaustion: {
+          enTitle: 'EXHAUSTION (+5)',
+          enDesc: ['Arm and leg stamina is reduced by 20 points']
+        },
+        polydipsia: {
+          enTitle: 'POLYDIPSIA (+1)',
+          enDesc: ['Hydration is consumed 25% faster']
+        },
+        dr_jekyll: {
+          enTitle: 'DR. JEKYLL (+2)',
+          enDesc: ['After gaining the Fresh Wound status, it cannot be removed until the end of the raid']
+        },
+        no_flea: {
+          enTitle: 'NO FLEA MARKET (+8)',
+          enDesc: ['Trading with players on the Flea Market is disabled']
+        },
+        no_repairs: {
+          enTitle: 'NO REPAIRS (+2)',
+          enDesc: ['Items cannot be repaired through traders']
+        },
+        no_love_fence: {
+          enTitle: 'NO LOVE FROM FENCE (+2)',
+          enDesc: ['Start with Fence reputation at -7.0']
+        },
+        no_scav_runs: {
+          enTitle: 'NO SCAV RUNS (+3)',
+          enDesc: ['Unable to play as a Scav']
+        },
+        hemophilia: {
+          enTitle: 'HEMOPHILIA (+2)',
+          enDesc: ['Шанс получить кровотечение увеличивается на 70% (Bleeding chance is increased by 70%)']
+        },
+        well_that_hurt: {
+          enTitle: 'WELL THAT HURT! (+1)',
+          enDesc: ['All medkit uses consume 33% more resource']
+        },
+        chronic_fatigue: {
+          enTitle: 'CHRONIC FATIGUE SYNDROME (+1)',
+          enDesc: ['Energy is consumed 20% faster']
+        },
+        allergic: {
+          enTitle: 'ALLERGIC (+2)',
+          enDesc: ['Become allergic to 4 random items from the Provisions or Medication category']
+        },
+        third_leg: {
+          enTitle: 'THIRD LEG (+1)',
+          enDesc: ['Movement speed is decreased by 2%', 'Buying items at Therapist is 5% cheaper']
+        }
+      };
+
+      // 初期ロード時に元の日本語HTMLをキャッシュしておく
+      document.querySelectorAll('.global-card').forEach(card => {
+        const gid = card.dataset.gid;
+        if (i18nData[gid]) {
+          i18nData[gid].jaTitle = card.querySelector('.card-title').innerHTML;
+          i18nData[gid].jaDesc = card.querySelector('.card-desc').innerHTML;
+        }
+      });
+
+      cards.forEach(card => {
+        const id = card.dataset.id;
+        const titleEl = card.querySelector('div.text-xs.font-bold');
+        const descEl = card.querySelector('ul');
+        if (i18nData[id] && titleEl && descEl) {
+          i18nData[id].jaTitle = titleEl.innerHTML;
+          i18nData[id].jaDesc = descEl.innerHTML;
+        }
+      });
+
+      // 明らかに矛盾するペア（排他制御の参考用・警告表示など）
+      const conflicts = {
+        introvert: ['extrovert'],
+        extrovert: ['introvert'],
+        lucky: ['unlucky'],
+        unlucky: ['lucky'],
+        thrombophilia: ['hemophilia', 'coagulopathy'],
+        hemophilia: ['thrombophilia'],
+        coagulopathy: ['thrombophilia'],
+        average: ['prodigy', 'incompetent', 'kleptomaniac', 'fast_crafting', 'hercules', 'tarkov_shooter', 'tap_rack_roll'],
+        incompetent: ['prodigy', 'average', 'introvert'],
+        prodigy: ['average', 'incompetent'],
+        kappa_protocol: ['enhanced_container', 'broken_container'],
+        enhanced_container: ['kappa_protocol', 'broken_container'],
+        broken_container: ['kappa_protocol', 'enhanced_container'],
+        hypodipsia: ['polydipsia'],
+        polydipsia: ['hypodipsia'],
+        polyphagia: ['chronic_fatigue'],
+        chronic_fatigue: ['polyphagia']
+      };
+
+      const totalPointsEl = document.getElementById('total-points');
+      const statusBadgeEl = document.getElementById('status-badge');
+      const posCountEl = document.getElementById('pos-count');
+      const negCountEl = document.getElementById('neg-count');
+      const posPtsEl = document.getElementById('pos-pts');
+      const negPtsEl = document.getElementById('neg-pts');
+      const totalCountEl = document.getElementById('total-count');
+
+      // 言語の適用処理
+      function applyLanguage(lang) {
+        currentLang = lang === 'en' ? 'en' : 'ja';
+        const isEn = currentLang === 'en';
+        document.documentElement.lang = currentLang;
+        document.title = isEn
+          ? 'EFT Season 2: UNTAR CONTROL - Modifier Build Simulator'
+          : 'EFT Season 2: UNTAR CONTROL - モディファイア・ビルドシミュレーター';
+
+        // 切り替えボタンの表記
+        document.getElementById('lang-label').textContent = isEn ? 'EN / JP (English)' : 'JP / EN (日本語)';
+
+        // ヘッダー＆セクション見出し
+        document.getElementById('hdr-season').textContent = isEn ? 'SEASON 2' : 'SEASON 2 / シーズン2';
+        document.getElementById('hdr-badge').textContent = isEn ? 'Unofficial Build Simulator' : '非公式ビルドシミュレーター';
+        document.getElementById('hdr-sub').classList.toggle('hidden', isEn);
+        document.getElementById('hdr-desc').innerHTML = isEn
+          ? 'Click on the Personal Positive and Personal Negative cards below to create your build.<br class="hidden sm:inline">You can deploy if your total points are <strong class="text-white">0 or higher (positive allowed)</strong>.'
+          : '下の「個人ポジティブ」「個人ネガティブ」の各カードをクリックしてビルドを組めます。<br class="hidden sm:inline">合計ポイントが <strong class="text-white">0以上（プラス含む）</strong> であれば出撃可能です。';
+
+        document.getElementById('sec-global-sub').textContent = isEn ? '(Shared World Rules)' : '（グローバル・モディファイア / 全員共通ルール）';
+        document.getElementById('sec-pos-sub').textContent = isEn ? '(Click to Select / Minus Cost)' : '（個人ポジティブ / クリックで選択・マイナス値）';
+        document.getElementById('sec-neg-sub').textContent = isEn ? '(Click to Select / Plus Points)' : '（個人ネガティブ / クリックで選択・プラス値）';
+        document.getElementById('ftr-notice').textContent = isEn
+          ? '* Modifier values and mechanics may be adjusted before the start of the season for balancing purposes.'
+          : '※バランス調整のため、シーズン開始前にモディファイアの数値や仕様が変更される場合があります。';
+
+        // 下部固定バー＆モーダルUI
+        document.getElementById('lbl-total-pts').textContent = isEn ? 'Total Points:' : '合計ポイント:';
+        document.getElementById('lbl-pos-short').textContent = isEn ? 'Positive' : 'ポジティブ';
+        document.getElementById('lbl-neg-short').textContent = isEn ? 'Negative' : 'ネガティブ';
+        document.querySelectorAll('.unit-count').forEach(el => el.textContent = isEn ? '' : '個');
+
+        document.getElementById('txt-summary').textContent = isEn ? 'Summary' : '構成確認';
+        document.getElementById('btn-share-url').textContent = isEn ? 'Copy URL' : 'URLコピー';
+        document.getElementById('txt-post-x').textContent = isEn ? 'Post' : 'で共有';
+        document.getElementById('btn-copy').textContent = isEn ? 'Copy Text' : 'テキストコピー';
+        document.getElementById('btn-reset').textContent = isEn ? 'Reset' : 'リセット';
+
+        document.getElementById('modal-title').textContent = isEn ? 'Selected Modifiers Build' : '選択中のモディファイア構成';
+        document.getElementById('modal-lbl-total').textContent = isEn ? 'Total' : '合計';
+        document.getElementById('btn-modal-url').textContent = isEn ? 'Copy URL' : 'URLコピー';
+        document.getElementById('btn-modal-x').textContent = isEn ? '𝕏 Share' : '𝕏 で共有';
+        document.getElementById('btn-modal-copy').textContent = isEn ? 'Copy Text' : 'テキストコピー';
+        document.getElementById('btn-modal-ok').textContent = isEn ? 'Close' : '閉じる';
+
+        // グローバルカードの書き換え
+        document.querySelectorAll('.global-card').forEach(card => {
+          const gid = card.dataset.gid;
+          const data = i18nData[gid];
+          if (!data) return;
+          card.querySelector('.card-title').innerHTML = isEn ? data.enTitle : data.jaTitle;
+          card.querySelector('.card-desc').innerHTML = isEn
+            ? data.enDesc.map(li => `<li>${li}</li>`).join('')
+            : data.jaDesc;
+        });
+
+        // パーソナルカードの書き換え
+        cards.forEach(card => {
+          const id = card.dataset.id;
+          const data = i18nData[id];
+          if (!data) return;
+          const titleEl = card.querySelector('div.text-xs.font-bold');
+          const descEl = card.querySelector('ul');
+          const badgeEl = card.querySelector('.check-badge');
+          if (titleEl) titleEl.innerHTML = isEn ? data.enTitle : data.jaTitle;
+          if (descEl) {
+            descEl.innerHTML = isEn
+              ? data.enDesc.map(li => `<li>${li}</li>`).join('')
+              : data.jaDesc;
+          }
+          if (badgeEl) {
+            badgeEl.textContent = isEn ? 'SELECTED' : '選択中';
+          }
+        });
+
+        updateUI();
+      }
+
+      // 言語切り替えボタンイベント
+      document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+        applyLanguage(currentLang === 'ja' ? 'en' : 'ja');
+      });
+
+      // URLパラメータから選択状態と言語を復元
+      function loadFromURL() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const langParam = params.get('lang');
+          if (langParam === 'en' || langParam === 'ja') {
+            currentLang = langParam;
+          } else {
+            // 日本語（ja / ja-JP）以外はハングル・中国語・その他すべての言語で安全に英語（en）へフォールバック
+            const browserLang = (navigator.language || (navigator.languages && navigator.languages[0]) || 'en').toLowerCase();
+            currentLang = browserLang.startsWith('ja') ? 'ja' : 'en';
+          }
+
+          const buildParam = params.get('b');
+          if (!buildParam) return;
+          const indices = buildParam.split(',').map(v => parseInt(v, 10));
+          indices.forEach(idx => {
+            if (!isNaN(idx) && cardIdList[idx]) {
+              selectedIds.add(cardIdList[idx]);
+            }
+          });
+        } catch (e) {
+          console.warn('Failed to parse URL parameters:', e);
+        }
+      }
+
+      // 現在の選択状態・言語を含む共有用URLを生成し、アドレスバーも静かに更新
+      function syncAndGetShareURL() {
+        const indices = [];
+        cardIdList.forEach((id, idx) => {
+          if (selectedIds.has(id)) {
+            indices.push(idx);
+          }
+        });
+        const url = new URL(window.location.href);
+        if (indices.length > 0) {
+          url.searchParams.set('b', indices.join(','));
+        } else {
+          url.searchParams.delete('b');
+        }
+        if (currentLang === 'en') {
+          url.searchParams.set('lang', 'en');
+        } else {
+          url.searchParams.delete('lang');
+        }
+        try {
+          window.history.replaceState(null, '', url.toString());
+        } catch (e) {
+          // iFrame環境等でreplaceStateが制限される場合は無視
+        }
+        return url.toString();
+      }
+
+      // トースト表示
+      function showToast(msg, isError = false) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = `fixed top-5 right-5 ${isError ? 'bg-red-700' : 'bg-[#2b6cb0]'} text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded shadow-lg opacity-100 pointer-events-none transition-opacity duration-200 z-50`;
+        setTimeout(() => {
+          toast.classList.remove('opacity-100');
+          toast.classList.add('opacity-0');
+        }, 2400);
+      }
+
+      // 選択状態とポイントの再計算
+      function updateUI() {
+        let total = 0;
+        let posCount = 0;
+        let negCount = 0;
+        let posPts = 0;
+        let negPts = 0;
+        const isEn = currentLang === 'en';
+
+        // 競合IDの収集
+        const activeConflicts = new Set();
+        selectedIds.forEach(id => {
+          if (conflicts[id]) {
+            conflicts[id].forEach(cId => activeConflicts.add(cId));
+          }
+        });
+
+        cards.forEach(card => {
+          const id = card.dataset.id;
+          const pts = parseInt(card.dataset.points, 10);
+          const type = card.dataset.type;
+          const badge = card.querySelector('.check-badge');
+
+          card.classList.remove('card-selected-pos', 'card-selected-neg', 'card-conflict');
+          badge.classList.add('hidden');
+
+          if (selectedIds.has(id)) {
+            total += pts;
+            if (type === 'pos') {
+              card.classList.add('card-selected-pos');
+              posCount++;
+              posPts += pts;
+            } else {
+              card.classList.add('card-selected-neg');
+              negCount++;
+              negPts += pts;
+            }
+            badge.classList.remove('hidden');
+          } else if (activeConflicts.has(id)) {
+            card.classList.add('card-conflict');
+          }
+        });
+
+        // 数値表示更新
+        totalPointsEl.textContent = total > 0 ? `+${total}` : total;
+        posCountEl.textContent = posCount;
+        negCountEl.textContent = negCount;
+        posPtsEl.textContent = posPts;
+        negPtsEl.textContent = `+${negPts}`;
+        totalCountEl.textContent = posCount + negCount;
+
+        // 0以上なら出撃可能、マイナスならポイント不足
+        if (total >= 0) {
+          totalPointsEl.className = 'font-oswald text-2xl sm:text-3xl font-bold text-[#68d391]';
+          statusBadgeEl.className = 'px-2.5 py-1 rounded text-xs sm:text-sm font-bold bg-[#22543d] text-[#9ae6b4] border border-[#38a169]';
+          statusBadgeEl.textContent = isEn ? '✔ Ready to Deploy (≥ 0 pt)' : '✔ 出撃可能（0pt以上）';
+        } else {
+          totalPointsEl.className = 'font-oswald text-2xl sm:text-3xl font-bold text-[#fc8181]';
+          statusBadgeEl.className = 'px-2.5 py-1 rounded text-xs sm:text-sm font-bold bg-[#742a2a] text-[#feb2b2] border border-[#e53e3e]';
+          statusBadgeEl.textContent = isEn ? `✖ Insufficient (+${Math.abs(total)} pt needed)` : `✖ ポイント不足（あと +${Math.abs(total)}pt 必要）`;
+        }
+
+        // URLパラメータを同期
+        syncAndGetShareURL();
+      }
+
+      // カードクリックイベント
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.dataset.id;
+          const isEn = currentLang === 'en';
+          if (selectedIds.has(id)) {
+            selectedIds.delete(id);
+          } else {
+            // 排他競合チェック（警告しつつ切り替え可能にする）
+            if (conflicts[id]) {
+              const conflictingSelected = conflicts[id].filter(cId => selectedIds.has(cId));
+              if (conflictingSelected.length > 0) {
+                conflictingSelected.forEach(cId => selectedIds.delete(cId));
+                showToast(isEn ? 'Switched from mutually exclusive modifier' : '効果が競合するモディファイアを解除して切り替えました');
+              }
+            }
+            selectedIds.add(id);
+          }
+          updateUI();
+        });
+      });
+
+      // リセットボタン
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        if (selectedIds.size === 0) return;
+        selectedIds.clear();
+        updateUI();
+        showToast(currentLang === 'en' ? 'Selection cleared' : '選択をすべてリセットしました');
+      });
+
+      // 表示言語に応じたカード名称を取得
+      function getDisplayCardName(card) {
+        const raw = card.dataset.name;
+        if (!raw.includes(' / ')) return raw;
+        const parts = raw.split(' / ');
+        return currentLang === 'en' ? parts[0] : raw;
+      }
+
+      // テキスト生成用ヘルパー
+      function generateBuildText() {
+        const posList = [];
+        const negList = [];
+        let total = 0;
+        const isEn = currentLang === 'en';
+
+        cards.forEach(card => {
+          const id = card.dataset.id;
+          if (selectedIds.has(id)) {
+            const pts = parseInt(card.dataset.points, 10);
+            const name = getDisplayCardName(card);
+            total += pts;
+            if (card.dataset.type === 'pos') {
+              posList.push(`・${name} (${pts})`);
+            } else {
+              negList.push(`・${name} (+${pts})`);
+            }
+          }
+        });
+
+        const statusStr = isEn
+          ? (total >= 0 ? 'Ready to Deploy (≥ 0pt)' : `Insufficient (+${Math.abs(total)}pt needed)`)
+          : (total >= 0 ? '出撃可能（0pt以上）' : `ポイント不足（あと +${Math.abs(total)}pt 必要）`);
+        const totalStr = total > 0 ? `+${total}` : total;
+        const shareUrl = syncAndGetShareURL();
+
+        if (isEn) {
+          return [
+            `【EFT Season 2: UNTAR CONTROL Build】`,
+            `Total Points: ${totalStr} pt [${statusStr}]`,
+            ``,
+            `■ Personal Positive (${posList.length})`,
+            posList.length > 0 ? posList.join('\n') : '・None',
+            ``,
+            `■ Personal Negative (${negList.length})`,
+            negList.length > 0 ? negList.join('\n') : '・None',
+            ``,
+            `Build URL: ${shareUrl}`
+          ].join('\n');
+        }
+
+        return [
+          `【EFT Season 2: UNTAR CONTROL ビルド構成】`,
+          `合計ポイント: ${totalStr} pt [${statusStr}]`,
+          ``,
+          `■ 個人ポジティブ (${posList.length}個)`,
+          posList.length > 0 ? posList.join('\n') : '・なし',
+          ``,
+          `■ 個人ネガティブ (${negList.length}個)`,
+          negList.length > 0 ? negList.join('\n') : '・なし',
+          ``,
+          `ビルド共有URL: ${shareUrl}`
+        ].join('\n');
+      }
+
+      // クリップボードへコピー（iFrame制限対応）
+      function copyTextHelper(text, successMsg) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast(successMsg);
+        } catch (err) {
+          showToast(currentLang === 'en' ? 'Failed to copy' : 'コピーに失敗しました', true);
+        }
+        document.body.removeChild(textarea);
+      }
+
+      function copyBuildToClipboard() {
+        const msg = currentLang === 'en' ? 'Build summary copied to clipboard!' : 'ビルド構成をクリップボードにコピーしました！';
+        copyTextHelper(generateBuildText(), msg);
+      }
+
+      function copyShareURLToClipboard() {
+        const shareUrl = syncAndGetShareURL();
+        const msg = currentLang === 'en' ? 'Shareable build URL copied!' : '共有用URLをコピーしました！リンクを開くとこの構成が復元されます';
+        copyTextHelper(shareUrl, msg);
+      }
+
+      // X（旧Twitter）への投稿画面を開く
+      function postBuildToX() {
+        const shareUrl = syncAndGetShareURL();
+        const isEn = currentLang === 'en';
+        let total = 0;
+        const posNames = [];
+        const negNames = [];
+
+        cards.forEach(card => {
+          const id = card.dataset.id;
+          if (selectedIds.has(id)) {
+            const pts = parseInt(card.dataset.points, 10);
+            const rawName = card.dataset.name;
+            const parts = rawName.split(' / ');
+            const shortName = isEn ? parts[0] : (parts[1] || parts[0]);
+            total += pts;
+            if (card.dataset.type === 'pos') {
+              posNames.push(`${shortName}(${pts})`);
+            } else {
+              negNames.push(`${shortName}(+${pts})`);
+            }
+          }
+        });
+
+        const status = isEn
+          ? (total >= 0 ? 'Ready' : `Need +${Math.abs(total)}pt`)
+          : (total >= 0 ? '出撃可能' : `あと+${Math.abs(total)}pt必要`);
+        const totalStr = total > 0 ? `+${total}` : `${total}`;
+
+        let tweetLines = isEn
+          ? [
+              `EFT Season 2: UNTAR CONTROL Build`,
+              `Total: ${totalStr}pt [${status}]`,
+              `🟢Positive: ${posNames.length > 0 ? posNames.join(' / ') : 'None'}`,
+              `🔴Negative: ${negNames.length > 0 ? negNames.join(' / ') : 'None'}`
+            ]
+          : [
+              `EFT Season 2: UNTAR CONTROL ビルド`,
+              `合計: ${totalStr}pt [${status}]`,
+              `🟢ポジティブ: ${posNames.length > 0 ? posNames.join(' / ') : 'なし'}`,
+              `🔴ネガティブ: ${negNames.length > 0 ? negNames.join(' / ') : 'なし'}`
+            ];
+
+        let tweetText = tweetLines.join('\n');
+        // URL分を考慮して長すぎる場合は省略
+        if (tweetText.length > 210) {
+          tweetText = isEn
+            ? [
+                `EFT Season 2: UNTAR CONTROL Build`,
+                `Total: ${totalStr}pt [${status}]`,
+                `🟢Positive (${posNames.length}) / 🔴Negative (${negNames.length})`
+              ].join('\n')
+            : [
+                `EFT Season 2: UNTAR CONTROL ビルド`,
+                `合計: ${totalStr}pt [${status}]`,
+                `🟢ポジティブ(${posNames.length}個) / 🔴ネガティブ(${negNames.length}個)`
+              ].join('\n');
+        }
+
+        const intentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}&hashtags=${encodeURIComponent('EscapefromTarkov,EFT')}`;
+        window.open(intentUrl, '_blank', 'noopener,noreferrer');
+      }
+
+      document.getElementById('btn-copy').addEventListener('click', copyBuildToClipboard);
+      document.getElementById('btn-modal-copy').addEventListener('click', copyBuildToClipboard);
+      document.getElementById('btn-share-url').addEventListener('click', copyShareURLToClipboard);
+      document.getElementById('btn-modal-url').addEventListener('click', copyShareURLToClipboard);
+      document.getElementById('btn-post-x').addEventListener('click', postBuildToX);
+      document.getElementById('btn-modal-x').addEventListener('click', postBuildToX);
+
+      // 構成確認モーダル
+      const modal = document.getElementById('summary-modal');
+      const modalBody = document.getElementById('modal-body');
+      const modalTotalPts = document.getElementById('modal-total-pts');
+
+      document.getElementById('btn-summary').addEventListener('click', () => {
+        let total = 0;
+        let posHtml = '';
+        let negHtml = '';
+        const isEn = currentLang === 'en';
+
+        cards.forEach(card => {
+          const id = card.dataset.id;
+          if (selectedIds.has(id)) {
+            const pts = parseInt(card.dataset.points, 10);
+            const name = getDisplayCardName(card);
+            total += pts;
+            if (card.dataset.type === 'pos') {
+              posHtml += `<div class="flex justify-between py-1 border-b border-gray-800"><span class="text-[#a3e6b0]">${name}</span><span class="font-bold text-[#8ce09b]">${pts} pt</span></div>`;
+            } else {
+              negHtml += `<div class="flex justify-between py-1 border-b border-gray-800"><span class="text-[#f69c94]">${name}</span><span class="font-bold text-[#f28b82]">+${pts} pt</span></div>`;
+            }
+          }
+        });
+
+        const posHeader = isEn ? 'Personal Positive (Cost)' : '個人ポジティブ（マイナス値）';
+        const negHeader = isEn ? 'Personal Negative (Gain)' : '個人ネガティブ（プラス値）';
+        const noneText = isEn ? 'None selected' : '選択なし';
+
+        modalBody.innerHTML = `
+          <div>
+            <div class="text-xs font-bold text-[#8ce09b] mb-1">${posHeader}</div>
+            ${posHtml || `<div class="text-gray-500 text-xs">${noneText}</div>`}
+          </div>
+          <div class="mt-3">
+            <div class="text-xs font-bold text-[#f28b82] mb-1">${negHeader}</div>
+            ${negHtml || `<div class="text-gray-500 text-xs">${noneText}</div>`}
+          </div>
+        `;
+        modalTotalPts.textContent = total > 0 ? `+${total}` : total;
+        modalTotalPts.className = total >= 0 ? 'text-base font-bold text-[#68d391]' : 'text-base font-bold text-[#fc8181]';
+        modal.classList.remove('hidden');
+      });
+
+      document.getElementById('btn-close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+      document.getElementById('btn-modal-ok').addEventListener('click', () => modal.classList.add('hidden'));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
+      });
+
+      // 初期ロード時にURLからビルドと言語を復元して適用
+      loadFromURL();
+      applyLanguage(currentLang);
+    });
+  </script>
+</body>
+</html>
